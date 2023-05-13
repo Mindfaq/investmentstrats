@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 
+
 class InvestmentStrategies:
     """
     Class for comparing different investment strategies.
@@ -68,8 +69,8 @@ class InvestmentStrategies:
         """
         Test and compare the performance of lump sum and dollar-cost averaging (DCA) investment strategies.
 
-        For each year in the `self.years` attribute, the method simulates both investment strategies 
-        over every possible `year`-long period in the historical data. 
+        For each year in the `self.years` attribute, the method simulates both investment strategies
+        over every possible `year`-long period in the historical data.
 
         It calculates the number of wins and the average annualized return for each strategy.
 
@@ -78,49 +79,102 @@ class InvestmentStrategies:
         Returns
         -------
         pd.DataFrame
-            A DataFrame with the results of the comparison. The DataFrame has the following columns:
-            - 'Year': The number of years over which the strategies were compared.
-            - 'Lump Sum Wins': The number of periods in which the lump sum strategy resulted in a greater ending value.
-            - 'Dollar-Cost Averaging Wins': The number of periods in which the DCA strategy resulted in a greater ending value.
-            - 'Average Annualized Lump Sum Return': The average annualized return of the lump sum strategy over all periods.
-            - 'Average Annualized DCA Return': The average annualized return of the DCA strategy over all periods.
-            - 'Lump Sum Win Ratio': The percentage of periods in which the lump sum strategy resulted in a greater ending value.
+            A DataFrame with the results of the comparison.
         """
         results = []
 
         # Download all the available data at once
-        data = yf.download('^IXIC', period="max", interval='1mo')
-        data.dropna(inplace=True)  # drop rows with missing data
-        data = data['Adj Close']  # we're only interested in the adjusted close prices
+        data = self.download_data('^IXIC')
 
         for year in self.years:
-            lumpsum_wins = 0
-            dca_wins = 0
-            lumpsum_returns = []
-            dca_returns = []
-
-            for start in range(len(data) - year * 12):
-                prices = data.iloc[start:start + year * 12]
-                lumpsum_ending_value, lumpsum_return = self.invest_lumpsum(self.amount, prices)
-                dca_ending_value, dca_return = self.invest_dca(self.amount / (year * 12), prices)
-                lumpsum_returns.append(lumpsum_return)
-                dca_returns.append(dca_return)
-
-                if lumpsum_ending_value > dca_ending_value:
-                    lumpsum_wins += 1
-                else:
-                    dca_wins += 1
-
+            lumpsum_wins, dca_wins, lumpsum_returns, dca_returns = self.simulate_strategies(data, year)
+            
             results.append({
                 'Year': year,
                 'Lump Sum Wins': lumpsum_wins,
                 'Dollar-Cost Averaging Wins': dca_wins,
                 'Average Annualized Lump Sum Return': np.mean(lumpsum_returns) * 100,
                 'Average Annualized DCA Return': np.mean(dca_returns) * 100,
-                'Lump Sum Win Ratio': lumpsum_wins / (lumpsum_wins + dca_wins) * 100
+                'Lump Sum Win Ratio': self.calculate_win_ratio(lumpsum_wins, dca_wins)
             })
 
         return pd.DataFrame(results)
+
+
+    def download_data(self, symbol):
+        """
+        Download and preprocess historical data.
+
+        Parameters
+        ----------
+        symbol : str
+            The stock symbol to download data for.
+
+        Returns
+        -------
+        pd.Series
+            Preprocessed adjusted close prices.
+        """
+        data = yf.download(symbol, period="max", interval='1mo')
+        data.dropna(inplace=True)  # drop rows with missing data
+        return data['Adj Close']
+
+
+    def simulate_strategies(self, data, year):
+        """
+        Simulate lump sum and DCA strategies and calculate wins and returns.
+
+        Parameters
+        ----------
+        data : pd.Series
+            Preprocessed adjusted close prices.
+        year : int
+            Number of years for simulation.
+
+        Returns
+        -------
+        Tuple
+            A tuple containing the number of wins for lump sum and DCA strategies, and the corresponding returns.
+        """
+        lumpsum_wins = 0
+        dca_wins = 0
+        lumpsum_returns = []
+        dca_returns = []
+
+        for start in range(len(data) - year * 12):
+            prices = data.iloc[start:start + year * 12]
+            lumpsum_ending_value, lumpsum_return = self.invest_lumpsum(self.amount, prices)
+            dca_ending_value, dca_return = self.invest_dca(self.amount / (year * 12), prices)
+            lumpsum_returns.append(lumpsum_return)
+            dca_returns.append(dca_return)
+
+            if lumpsum_ending_value > dca_ending_value:
+                lumpsum_wins += 1
+            else:
+                dca_wins += 1
+
+        return lumpsum_wins, dca_wins, lumpsum_returns, dca_returns
+
+
+    def calculate_win_ratio(self, lumpsum_wins, dca_wins):
+        """
+        Calculate the win ratio between lump sum and DCA strategies.
+
+        Parameters
+        ----------
+        lumpsum_wins : int
+            Number of wins for the lump sum strategy.
+        dca_wins : int
+            Number of wins for the DCA strategy.
+
+        Returns
+        -------
+        float
+            The win ratio in percentage.
+        """
+        total_wins = lumpsum_wins + dca_wins
+        return total_wins
+
 
 
 if __name__ == "__main__":
