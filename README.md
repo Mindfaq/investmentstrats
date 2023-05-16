@@ -37,10 +37,11 @@ The program will output a DataFrame showing the comparison between the two strat
 Sample output from default test run:
 | Investment Period | Lump Sum Wins | DCA Wins | Average Annualized Lump Sum Return | Average Annualized DCA Return | Lump Sum Win Ratio |
 |-------------------|---------------|----------|-----------------------------------|------------------------------|---------------------|
+| 1 year            | 325           | 124      | 11.95%                            | 5.86%                        | 72.38%              |
+| 2 years           | 354           | 83       | 11.44%                            | 5.76%                        | 81.01%              |
 | 5 years           | 332           | 69       | 10.78%                            | 5.91%                        | 82.79%              |
 | 10 years          | 310           | 31       | 10.29%                            | 5.92%                        | 90.91%              |
 | 15 years          | 256           | 25       | 8.93%                             | 5.23%                        | 91.10%              |
-
 
 ## Disclaimer
 This tool is for educational purposes only. Past performance is not indicative of future results. Always do your own research and consider your financial decisions carefully.
